@@ -5,8 +5,12 @@ import os
 
 app = Flask(__name__)
 
-# استخدام مفاتيح API المخزنة في البيئة
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# تحميل مفتاح OpenAI من البيئة
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("❌ خطأ: مفتاح OpenAI غير موجود! تأكد من إضافته في Render.")
+
+openai.api_key = OPENAI_API_KEY
 
 @app.route("/", methods=["GET"])
 def home():
@@ -14,21 +18,23 @@ def home():
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp_webhook():
-    incoming_msg = request.values.get("Body", "").strip()  # استلام رسالة المستخدم
+    incoming_msg = request.values.get("Body", "").strip()
     resp = MessagingResponse()
     reply = resp.message()
 
     try:
-        # إرسال الرسالة إلى ChatGPT والحصول على الرد
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # يمكنك تغييره إلى "gpt-4" إذا كان لديك حق الوصول
+            model="gpt-3.5-turbo",  # يمكنك تغييره إلى "gpt-4o" إذا كنت تريد استخدام نموذج أحدث
             messages=[{"role": "user", "content": incoming_msg}]
         )
-        
         bot_reply = response["choices"][0]["message"]["content"]
     
+    except openai.error.AuthenticationError:
+        bot_reply = "❌ خطأ: مفتاح OpenAI غير صالح أو منتهي الصلاحية. تحقق منه في Render."
+    except openai.error.RateLimitError:
+        bot_reply = "🚨 عذرًا، لقد تجاوزت الحد المسموح به من الطلبات. حاول لاحقًا."
     except Exception as e:
-        bot_reply = "عذرًا، هناك مشكلة في الاتصال بـ ChatGPT. حاول مرة أخرى لاحقًا!"
+        bot_reply = f"❌ حدث خطأ غير متوقع: {str(e)}"
 
     reply.body(bot_reply)
     return str(resp)
