@@ -5,30 +5,33 @@ import os
 
 app = Flask(__name__)
 
-# استخدام متغيرات البيئة لتخزين المفاتيح الحساسة
+# استخدام مفاتيح API المخزنة في البيئة
 openai.api_key = os.getenv("OPENAI_API_KEY")
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 
-# الصفحة الرئيسية - لتأكيد أن السيرفر يعمل
 @app.route("/", methods=["GET"])
 def home():
-    return "WhatsApp Chatbot is running!"
+    return "WhatsApp Chatbot is running with ChatGPT integration!"
 
-# Webhook لاستقبال الرسائل من WhatsApp عبر Twilio
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp_webhook():
-    incoming_msg = request.values.get("Body", "").strip()
+    incoming_msg = request.values.get("Body", "").strip()  # استلام رسالة المستخدم
     resp = MessagingResponse()
     reply = resp.message()
 
-    if incoming_msg:
-        bot_reply = "مرحبًا! كيف يمكنني مساعدتك؟"
-        reply.body(bot_reply)
+    try:
+        # إرسال الرسالة إلى ChatGPT والحصول على الرد
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # يمكنك تغييره إلى "gpt-4" إذا كان لديك حق الوصول
+            messages=[{"role": "user", "content": incoming_msg}]
+        )
+        
+        bot_reply = response["choices"][0]["message"]["content"]
+    
+    except Exception as e:
+        bot_reply = "عذرًا، هناك مشكلة في الاتصال بـ ChatGPT. حاول مرة أخرى لاحقًا!"
 
+    reply.body(bot_reply)
     return str(resp)
 
-# تشغيل التطبيق على Render مع استخدام المنفذ الصحيح
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # ضبط المنفذ تلقائيًا بناءً على بيئة التشغيل
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)), debug=True)
