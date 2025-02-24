@@ -24,9 +24,10 @@ def whatsapp_webhook():
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # يمكنك تغييره إلى "gpt-4o" إذا كنت تريد استخدام نموذج أحدث
-            messages=[{"role": "user", "content": incoming_msg}]
-        )
+    model="gpt-4o",  # استخدم النموذج المدفوع
+    messages=[{"role": "user", "content": incoming_msg}]
+)
+
         bot_reply = response.choices[0].message.content
     
     except openai.AuthenticationError:
