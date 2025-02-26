@@ -1,0 +1,31 @@
+ 
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل المحادثات</title>
+    <style>
+        body { font-family: Arial, sans-serif; direction: rtl; text-align: right; padding: 20px; }
+        h2 { color: #333; }
+        .chat-container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; background-color: #f9f9f9; }
+        .user { color: blue; font-weight: bold; }
+        .assistant { color: green; font-weight: bold; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 10px; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h2>📌 سجل المحادثات</h2>
+    <div class="chat-container">
+        {% for user, messages in sessions.items() %}
+            <h3>💬 محادثة مع: {{ user }}</h3>
+            <ul>
+                {% for msg in messages %}
+                    <li><span class="{{ msg.role }}">{{ msg.role }}:</span> {{ msg.content }}</li>
+                {% endfor %}
+            </ul>
+        {% endfor %}
+    </div>
+</body>
+</html>
